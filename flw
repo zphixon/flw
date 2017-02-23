@@ -136,6 +136,11 @@ end
 
 -- focus history
 local focus = {}
+local log = false
+
+if arg[1] == "-l" then
+    log = true
+end
 
 while true do
     local input = io.read()
@@ -162,7 +167,7 @@ while true do
 
         table.insert(focus, wid)
 
-        print(event, wid, tstring(focus))
+        if log then print(event, wid, tstring(focus)) end
     elseif event == 17 then
         -- window destroyed
 
@@ -178,7 +183,7 @@ while true do
             -- TODO handle this case
         end
 
-        print(event, wid, tstring(focus))
+        if log then print(event, wid, tstring(focus)) end
     elseif event == nil then
         -- someone's messing around
         print("please start flw with wew -m 2097152")
