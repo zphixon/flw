@@ -14,8 +14,9 @@ that `os.execute` works on your system.
 Execute flw with the following:
 
 ```
-wew -m 2097152 | /path/to/flw
+wew -m 2097152 | /path/to/flw > /tmp/flw.log &
 ```
 
-You should put this line in your .xsession/.xinitrc to start flw when your WM starts.
+You should put this line in your .xsession/.xinitrc to start flw when your WM
+starts. **flw no longer requires microlight to be installed**
 
