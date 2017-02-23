@@ -1,0 +1,4 @@
+#!/bin/sh
+
+wew -m 2097152 | ./track_focus.lua
+
