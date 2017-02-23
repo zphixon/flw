@@ -18,6 +18,4 @@ wew -m 2097152 | /path/to/flw
 ```
 
 You should put this line in your .xsession/.xinitrc to start flw when your WM starts.
-Additionally, ml.lua needs to be in a place accessible to the lua interpreter, like
-`/usr/share/lua/<lua version>/ml.lua`
 

@@ -1,10 +1,125 @@
 #!/usr/bin/env lua
 
-local ml = require("ml")
+-- helper functions {{{
 
--- lost focus history
-local focus = {}
+-- copied from microlight
+function split(s,re,n)
+    local find,sub,append = string.find, string.sub, table.insert
+    local i1,ls = 1,{}
+    if not re then re = '%s+' end
+    if re == '' then return {s} end
+    while true do
+        local i2,i3 = find(s,re,i1)
+        if not i2 then
+            local last = sub(s,i1)
+            if last ~= '' then append(ls,last) end
+            if #ls == 1 and ls[1] == '' then
+                return {}
+            else
+                return ls
+            end
+        end
+        append(ls,sub(s,i1,i2-1))
+        if n and #ls == n then
+            ls[#ls] = sub(s,i1)
+            return ls
+        end
+        i1 = i3+1
+    end
+end
 
+local function quote (v)
+    if type(v) == 'string' then
+        return ('%q'):format(v)
+    else
+        return tostring(v)
+    end
+end
+
+function tbuff (t,buff,k,start_indent,indent)
+    local start_indent2, indent2
+    if start_indent then
+        start_indent2 = indent
+        indent2 = indent .. indent
+    end
+    local function append (v)
+        if not v then return end
+        buff[k] = v
+        k = k + 1
+    end
+    local function put_item(value)
+        if type(value) == 'table' then
+            if not buff.tables[value] then
+                buff.tables[value] = true
+                k = tbuff(value,buff,k,start_indent2,indent2)
+            else
+                append("<cycle>")
+            end
+        else
+            value = quote(value)
+            append(value)
+        end
+        append ","
+        if start_indent then append '\n' end
+    end
+    append "{"
+    if start_indent then append '\n' end
+    -- array part -------
+    local array = {}
+    for i,value in ipairs(t) do
+        append(indent)
+        put_item(value)
+        array[i] = true
+    end
+    -- 'map' part ------
+    for key,value in pairs(t) do if not array[key] then
+        append(indent)
+        -- non-identifiers need ["key"]
+        if type(key)~='string' or not is_iden(key) then
+            if type(key)=='table' then
+                key = ml.tstring(key)
+            else
+                key = quote(key)
+            end
+            key = "["..key.."]"
+        end
+        append(key..'=')
+        put_item(value)
+    end end
+    -- removing trailing comma is done for prettiness, but this implementation
+    -- is not pretty at all!
+    local last = start_indent and buff[k-2] or buff[k-1]
+    if start_indent then
+        if last == '{' then -- empty table
+            k = k - 1
+        else
+            if last == ',' then -- get rid of trailing comma
+                k = k - 2
+                append '\n'
+            end
+            append(start_indent)
+        end
+    elseif last == "," then -- get rid of trailing comma
+        k = k - 1
+    end
+    append "}"
+    return k
+end
+
+-- copied from microlight
+function tstring (t,how)
+    if type(t) == 'table' and not (getmetatable(t) and getmetatable(t).__tostring) then
+        local buff = {tables={[t]=true}}
+        how = how or {}
+        if type(how) == 'string' then how = {indent = how} end
+        pcall(tbuff,t,buff,1,how.spacing or how.indent,how.indent)
+        return table.concat(buff)
+    else
+        return quote(t)
+    end
+end
+
+-- filter item from table: assumes packed table with numeric indexes
 local function filter(table, pred)
     local out = {}
     local i = 1
@@ -17,6 +132,11 @@ local function filter(table, pred)
     return out
 end
 
+-- }}}
+
+-- focus history
+local focus = {}
+
 while true do
     local input = io.read()
 
@@ -26,37 +146,42 @@ while true do
     end
 
     -- wew emits events as type:wid
-    local pair = ml.split(input, ":")
+    local pair = split(input, ":")
 
     -- split them up
     local event = tonumber(pair[1])
     local wid = pair[2]
 
-    if event == 10 then
-        -- window lost focus
+    if event == 9 then
+        -- window gained focus
+
+        -- filter window from list: prevent trying to focus on closed window
         focus = filter(focus, function(k, v)
             return v ~= wid
         end)
 
         table.insert(focus, wid)
+
+        print(event, wid, tstring(focus))
     elseif event == 17 then
         -- window destroyed
-        local index = ml.indexof(focus, wid)
 
-        if index ~= nil then
-            local remove = focus[index]
-
-            focus = filter(focus, function(k, v)
-                return v ~= remove
-            end)
+        if wid == focus[#focus] then
+            table.remove(focus)
 
             if focus[#focus] ~= nil then
                 os.execute("wtf " .. focus[#focus])
+            else
+                -- TODO handle this case
             end
+        else
+            -- TODO handle this case
         end
+
+        print(event, wid, tstring(focus))
     elseif event == nil then
         -- someone's messing around
-        print("please start flw with the executable script")
+        print("please start flw with wew -m 2097152")
     end
 end
 
