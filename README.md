@@ -3,10 +3,14 @@
 
 **f**ocus **l**ast **w**indow
 
-This script came from the fact that [windowchef](https://github.com/tudurom/windowchef)
+*[windowchef](https://github.com/tudurom/windowchef) has been updated and now
+changes focus to the last closed window. I'm not entirely sure what happens
+when you mix flw and wchf's version, and I'm not entirely willing to try it out.*
+
+~~This script came from the fact that [windowchef](https://github.com/tudurom/windowchef)
 doesn't focus the last window when the current window is closed. Hacked
 together with [microlight](https://github.com/stevedonovan/Microlight),
-[wtf](https://github.com/wmutlis/core), and [wew](https://github.com/wmutils/opt).
+[wtf](https://github.com/wmutlis/core), and [wew](https://github.com/wmutils/opt).~~
 
 flw requires wtf and wew to be installed and in `$PATH` to work. Also assumes
 that `os.execute` works on your system.
